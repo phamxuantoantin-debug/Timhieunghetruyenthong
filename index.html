@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giải Mã Làng Nghề</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Nunito', sans-serif; box-sizing: border-box; }
+    .font-title { font-family: 'Montserrat', sans-serif; }
+
+    .header-wrapper {
+        display: flex; align-items: center; padding: 15px 20px;
+        background: #0581be; border-bottom: 2px solid #00adef;
+    }
+    .logo-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #eee; background: white; }
+    .title-content { flex-grow: 1; text-align: center; margin-right: 60px; }
+    .title-content h1 { margin: 0; font-size: 20px; font-weight: 800; color: #0ce73c; text-transform: uppercase; line-height: 1.2; }
+
+    .fade-out { opacity: 0 !important; visibility: hidden; transform: scale(0.9); transition: all 0.4s ease; }
+    .correct-reveal {
+      background: linear-gradient(135deg, #00c853 0%, #00e676 100%) !important;
+      transform: scale(1.05);
+      z-index: 20;
+      border: 3px solid white !important;
+      box-shadow: 0 0 30px rgba(0, 230, 118, 0.5);
+    }
+    .glass-card { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border: 2px solid rgba(255, 215, 0, 0.3); }
+    .gradient-text {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .selected-border { border: 5px solid #fff !important; box-shadow: 0 0 20px #fff; }
+  </style>
+</head>
+<body class="h-full bg-[#1a1a2e] overflow-hidden">
+  <div id="app" class="h-full w-full flex flex-col" style="background: radial-gradient(circle, #1a1a2e 0%, #0a0a14 100%);">
+    
+    <div class="header-wrapper">
+        <img src="https://lh3.googleusercontent.com/u/0/d/1pvgGXoH3PeMQsKQz1SN7R02gTudoNvHR" alt="Logo" class="logo-img">
+        <div class="title-content">
+            <h1 class="font-title">CHỦ ĐỀ 7: TÌM HIỂU CÁC LÀNG NGHỀ TRUYỀN THỐNG Ở VIỆT NAM</h1>
+        </div>
+    </div>
+
+    <div id="start-screen" class="flex-grow flex flex-col items-center justify-center p-6 text-center">
+      <div class="text-7xl mb-4 animate-bounce">🏺</div>
+      <h1 class="text-5xl md:text-6xl font-black font-title gradient-text mb-6">GIẢI MÃ LÀNG NGHỀ</h1>
+      <button onclick="startGame()" class="text-2xl font-bold py-4 px-10 rounded-full text-gray-900 bg-gradient-to-r from-yellow-400 to-orange-500 shadow-xl hover:scale-105 transition-all">
+        🚀 BẮT ĐẦU CHƠI
+      </button>
+    </div>
+
+    <div id="question-screen" class="flex-grow flex flex-col p-6 hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div class="glass-card rounded-xl px-4 py-2 text-xl font-bold text-white">Câu <span id="current-q">1</span>/5</div>
+        <div class="glass-card rounded-xl px-6 py-2"><span id="timer" class="text-3xl font-black text-green-400">20</span></div>
+        <div class="glass-card rounded-xl px-4 py-2 text-xl font-bold text-yellow-400">⭐ <span id="score">0</span></div>
+      </div>
+
+      <div class="glass-card rounded-3xl p-8 mb-6 flex-grow flex items-center justify-center">
+        <h2 id="question-text" class="text-3xl md:text-4xl font-bold text-white text-center leading-snug"></h2>
+      </div>
+
+      <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 h-[35%]"></div>
+
+      <div class="mt-6 flex gap-4">
+        <button id="check-btn" onclick="reveal()" class="hidden w-full py-4 rounded-2xl text-2xl font-bold text-white bg-green-600 shadow-lg hover:bg-green-500">
+          ✅ KIỂM TRA ĐÁP ÁN
+        </button>
+        <button id="next-btn" onclick="nextQuestion()" class="hidden w-full py-4 rounded-2xl text-2xl font-bold text-gray-900 bg-yellow-400 shadow-lg hover:bg-yellow-300">
+          TIẾP THEO ➡️
+        </button>
+      </div>
+    </div>
+
+    <div id="result-screen" class="flex-grow flex flex-col items-center justify-center p-6 hidden text-center">
+        <div class="text-8xl mb-6">🏆</div>
+        <h2 class="text-6xl font-black font-title gradient-text mb-4">HOÀN THÀNH</h2>
+        <p id="result-message" class="text-3xl text-white mb-8"></p>
+        <button onclick="location.reload()" class="text-2xl font-bold py-4 px-12 rounded-full bg-white text-black">🔄 CHƠI LẠI</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { q: "Làng gốm Lái Thiêu thuộc tỉnh nào?", a: ["A. Hà Nội", "B. Thừa Thiên Huế", "C. Thành phố Hồ Chí Minh", "D. Đồng Nai"], c: 2 },
+      { q: "Bước nào thuộc quy trình làm nón Tây Hồ?", a: ["A. Tráng men", "B. Chằm (khâu) nón", "C. Nung lò", "D. Nhào đất"], c: 1 },
+      { q: "Vật liệu tạo khung nón Tây Hồ?", a: ["A. Thép", "B. Tre", "C. Nhựa", "D. Đồng"], c: 1 },
+      { q: "Nguyên liệu chính làm tò he Xuân La?", a: ["A. Đất sét", "B. Lá cọ", "C. Bột gạo nếp", "D. Tre khô"], c: 2 },
+      { q: "Vì sao không được chạm vào lò nung?", a: ["A. Dễ hỏng đồ", "B. Nhiệt độ cao gây bỏng", "C. Tốn điện", "D. Bẩn tay"], c: 1 }
+    ];
+
+    let currentIdx = 0, score = 0, timer = 20, interval, canAnswer = true;
+    let selectedIdx = null; // Lưu lựa chọn của người dùng
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound() {
+      const notes = [523, 659, 783, 1046];
+      notes.forEach((f, i) => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.1);
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime + i * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.4);
+        o.start(audioCtx.currentTime + i * 0.1); o.stop(audioCtx.currentTime + i * 0.1 + 0.4);
+      });
+    }
+
+    function startGame() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('question-screen').classList.remove('hidden');
+      showQuestion();
+    }
+
+    function showQuestion() {
+      canAnswer = true;
+      selectedIdx = null;
+      const qD = questions[currentIdx];
+      document.getElementById('current-q').textContent = currentIdx + 1;
+      document.getElementById('question-text').textContent = qD.q;
+      
+      const container = document.getElementById('answers-container');
+      container.innerHTML = '';
+      
+      const colors = ['#e53935', '#1e88e5', '#43a047', '#fb8c00'];
+      qD.a.forEach((ans, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn w-full h-full rounded-xl text-xl md:text-2xl font-bold text-white border-2 border-white/10 shadow-md transition-all';
+        btn.style.backgroundColor = colors[i];
+        btn.textContent = ans;
+        btn.onclick = () => selectAnswer(i, btn);
+        container.appendChild(btn);
+      });
+      document.getElementById('next-btn').classList.add('hidden');
+      document.getElementById('check-btn').classList.add('hidden');
+      startTimer();
+    }
+
+    function startTimer() {
+      timer = 20;
+      const tEl = document.getElementById('timer');
+      tEl.textContent = timer;
+      tEl.className = "text-3xl font-black text-green-400";
+      clearInterval(interval);
+      interval = setInterval(() => {
+        timer--;
+        tEl.textContent = timer;
+        if (timer <= 5) tEl.className = "text-3xl font-black text-red-500 animate-pulse";
+        if (timer <= 0) { 
+            clearInterval(interval); 
+            canAnswer = false;
+            document.getElementById('check-btn').classList.remove('hidden'); // Hiện nút kiểm tra khi hết giờ
+        }
+      }, 1000);
+    }
+
+    function selectAnswer(i, btn) {
+      if (!canAnswer) return;
+      
+      // Xóa highlight của các nút khác
+      document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected-border'));
+      // Highlight nút đang chọn
+      btn.classList.add('selected-border');
+      selectedIdx = i;
+
+      clearInterval(interval);
+      canAnswer = false;
+      document.getElementById('check-btn').classList.remove('hidden'); // Hiện nút kiểm tra sau khi chọn
+    }
+
+    function reveal() {
+      playSound();
+      const cIdx = questions[currentIdx].c;
+      
+      // Cộng điểm nếu chọn đúng trước khi bấm kiểm tra
+      if (selectedIdx === cIdx) {
+        score += 20;
+        document.getElementById('score').textContent = score;
+      }
+
+      const btns = document.querySelectorAll('.answer-btn');
+      btns.forEach((b, i) => {
+        if (i === cIdx) {
+            b.classList.remove('selected-border');
+            b.classList.add('correct-reveal');
+        } else {
+            b.classList.add('fade-out');
+        }
+      });
+      
+      document.getElementById('check-btn').classList.add('hidden');
+      document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+      currentIdx++;
+      if (currentIdx < questions.length) showQuestion();
+      else showResult();
+    }
+
+    function showResult() {
+      document.getElementById('question-screen').classList.add('hidden');
+      document.getElementById('result-screen').classList.remove('hidden');
+      document.getElementById('result-message').textContent = `BẠN ĐÃ ĐẠT ĐƯỢC ${score} ĐIỂM`;
+    }
+  </script>
+</body>
+</html>
