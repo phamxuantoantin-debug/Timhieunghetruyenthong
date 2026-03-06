@@ -33,6 +33,14 @@
       -webkit-text-fill-color: transparent;
     }
     .selected-border { border: 5px solid #fff !important; box-shadow: 0 0 20px #fff; }
+    
+    /* Hiệu ứng rung nhẹ khi đếm ngược kịch tính */
+    .shake-intense { animation: shake 0.1s infinite; }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px); }
+      50% { transform: translate(-1px, -1px); }
+      100% { transform: translate(1px, -1px); }
+    }
   </style>
 </head>
 <body class="h-full bg-[#1a1a2e] overflow-hidden">
@@ -85,19 +93,77 @@
   </div>
 
   <script>
-    const questions = [
-      { q: "Làng gốm Lái Thiêu thuộc tỉnh nào?", a: ["A. Hà Nội", "B. Thừa Thiên Huế", "C. Thành phố Hồ Chí Minh", "D. Đồng Nai"], c: 2 },
-      { q: "Bước nào thuộc quy trình làm nón Tây Hồ?", a: ["A. Tráng men", "B. Chằm (khâu) nón", "C. Nung lò", "D. Nhào đất"], c: 1 },
-      { q: "Vật liệu tạo khung nón Tây Hồ?", a: ["A. Thép", "B. Tre", "C. Nhựa", "D. Đồng"], c: 1 },
-      { q: "Nguyên liệu chính làm tò he Xuân La?", a: ["A. Đất sét", "B. Lá cọ", "C. Bột gạo nếp", "D. Tre khô"], c: 2 },
-      { q: "Vì sao không được chạm vào lò nung?", a: ["A. Dễ hỏng đồ", "B. Nhiệt độ cao gây bỏng", "C. Tốn điện", "D. Bẩn tay"], c: 1 }
-    ];
+const questions = [
+  { 
+    q: "Các nghệ nhân làng gốm Lái Thiêu (TP. Hồ Chí Minh) chủ yếu tạo ra nhóm sản phẩm tiêu biểu nào?", 
+    a: ["A. Tranh dân gian và đồ mĩ nghệ", "B. Đồ gia dụng và các sản phẩm gốm nghệ thuật", "C. Trang sức và phụ kiện thời trang", "D. Các loại nhạc cụ dân tộc"], 
+    c: 1 
+  },
+  { 
+    q: "Trong quy trình làm nón lá Tây Hồ, bước nào giúp lá nón phẳng đều?", 
+    a: ["A. Chằm nón", "B. Phơi và ủi lá", "C. Lồng bài thơ", "D. Quét dầu bóng"], 
+    c: 1 
+  },
+  { 
+    q: "Để tạo hình nhân vật tò he, người thợ ở Xuân La thường pha màu vào đâu?", 
+    a: ["A. Que tre", "B. Đất sét", "C. Bột gạo nếp", "D. Khăn ẩm"], 
+    c: 2 
+  },
+  { 
+    q: "Lưu ý an toàn quan trọng nhất khi thực hiện chằm nón lá là gì?", 
+    a: ["A. Đeo khẩu trang", "B. Cẩn thận khi dùng kim khâu", "C. Tránh làm ướt lá", "D. Giữ khu vực khô ráo"], 
+    c: 1 
+  },
+  { 
+    q: "Công cụ nào được dùng để xoay và tạo hình khối cho sản phẩm gốm?", 
+    a: ["A. Bàn xoay (bàn chuốt)", "B. Khuôn nón", "C. Que tre nhọn", "D. Kim khâu"], 
+    c: 0 
+  }
+  ];
 
-    let currentIdx = 0, score = 0, timer = 20, interval, canAnswer = true;
-    let selectedIdx = null; // Lưu lựa chọn của người dùng
+    let currentIdx = 0, score = 0, timer = 20, interval, canAnswer = true, selectedIdx = null; 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    function playSound() {
+    // HÀM TẠO ÂM THANH HỒI HỘP VÀ SÔI ĐỘNG (NHỊP TIM + CLICK)
+    function playExcitingTick(isWarning) {
+      const now = audioCtx.currentTime;
+      
+      // 1. Kick Bass (Âm trầm tạo độ sâu)
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.frequency.setValueAtTime(isWarning ? 100 : 60, now);
+      osc1.frequency.exponentialRampToValueAtTime(0.01, now + 0.1);
+      gain1.gain.setValueAtTime(0.4, now);
+      gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc1.connect(gain1); gain1.connect(audioCtx.destination);
+      osc1.start(); osc1.stop(now + 0.1);
+
+      // 2. High Tick (Âm cao tạo nhịp)
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(isWarning ? 2000 : 1200, now);
+      gain2.gain.setValueAtTime(0.05, now);
+      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+      osc2.connect(gain2); gain2.connect(audioCtx.destination);
+      osc2.start(); osc2.stop(now + 0.05);
+
+      // 3. Siren kịch tính (Chỉ cho 3 giây cuối)
+      if (isWarning) {
+        const osc3 = audioCtx.createOscillator();
+        const gain3 = audioCtx.createGain();
+        osc3.type = 'sawtooth';
+        osc3.frequency.setValueAtTime(440, now);
+        osc3.frequency.linearRampToValueAtTime(880, now + 0.2); // Hú lên cao
+        gain3.gain.setValueAtTime(0.05, now);
+        gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc3.connect(gain3); gain3.connect(audioCtx.destination);
+        osc3.start(); osc3.stop(now + 0.3);
+      }
+    }
+
+    // Âm thanh khi mở đáp án
+    function playRevealSound() {
       const notes = [523, 659, 783, 1046];
       notes.forEach((f, i) => {
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
@@ -149,39 +215,41 @@
       interval = setInterval(() => {
         timer--;
         tEl.textContent = timer;
-        if (timer <= 5) tEl.className = "text-3xl font-black text-red-500 animate-pulse";
+
+        if (timer > 3) {
+            playExcitingTick(false); // Âm hồi hộp
+        } else if (timer <= 3 && timer > 0) {
+            tEl.className = "text-3xl font-black text-red-500 animate-pulse shake-intense";
+            playExcitingTick(true); // Âm kịch tính cực độ
+        }
+
         if (timer <= 0) { 
             clearInterval(interval); 
             canAnswer = false;
-            document.getElementById('check-btn').classList.remove('hidden'); // Hiện nút kiểm tra khi hết giờ
+            tEl.classList.remove('shake-intense');
+            document.getElementById('check-btn').classList.remove('hidden');
         }
       }, 1000);
     }
 
     function selectAnswer(i, btn) {
       if (!canAnswer) return;
-      
-      // Xóa highlight của các nút khác
+      clearInterval(interval);
+      document.getElementById('timer').classList.remove('shake-intense');
       document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected-border'));
-      // Highlight nút đang chọn
       btn.classList.add('selected-border');
       selectedIdx = i;
-
-      clearInterval(interval);
       canAnswer = false;
-      document.getElementById('check-btn').classList.remove('hidden'); // Hiện nút kiểm tra sau khi chọn
+      document.getElementById('check-btn').classList.remove('hidden');
     }
 
     function reveal() {
-      playSound();
+      playRevealSound();
       const cIdx = questions[currentIdx].c;
-      
-      // Cộng điểm nếu chọn đúng trước khi bấm kiểm tra
       if (selectedIdx === cIdx) {
         score += 20;
         document.getElementById('score').textContent = score;
       }
-
       const btns = document.querySelectorAll('.answer-btn');
       btns.forEach((b, i) => {
         if (i === cIdx) {
@@ -191,7 +259,6 @@
             b.classList.add('fade-out');
         }
       });
-      
       document.getElementById('check-btn').classList.add('hidden');
       document.getElementById('next-btn').classList.remove('hidden');
     }
